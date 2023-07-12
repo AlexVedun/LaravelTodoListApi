@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable();
             $table->string('status')->index();
             $table->tinyInteger('priority')->index();
-            $table->string('title');
+            $table->string('title')->fulltext();
             $table->text('description');
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();

@@ -71,7 +71,7 @@ class TaskRepository implements TaskRepositoryInterface
                 return $query->where('priority', $priorityFilter);
             })
             ->when($titleFilter, function (Builder $query) use ($titleFilter) {
-                return $query->where('title', 'like', "%${titleFilter}%");
+                return $query->whereFullText('title', $titleFilter);
             });
 
         $sortField = match ($sortBy) {
