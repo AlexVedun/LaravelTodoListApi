@@ -23,6 +23,7 @@ class Task extends Model
         'status',
         'title',
         'description',
+        'completed_at',
     ];
     protected $casts = [
         'completed_at' => 'datetime',

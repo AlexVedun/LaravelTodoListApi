@@ -13,6 +13,8 @@ class TaskRepository implements TaskRepositoryInterface
 {
     public function createTask(array $taskData): ?Task
     {
+        $taskData['status'] = Task::STATUS_TODO;
+
         try {
             return Task::create($taskData);
         } catch (\Throwable $exception) {

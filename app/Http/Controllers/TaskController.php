@@ -170,7 +170,7 @@ class TaskController extends Controller
             );
         }
 
-        if (!$this->taskRepository->deleteTask($taskId)) {
+        if (!$this->taskRepository->deleteTask($task)) {
             return response()->json(
                 $this->responseService->getErrorResponse('Cannot delete selected task due to internal error'),
                 Response::HTTP_INTERNAL_SERVER_ERROR
