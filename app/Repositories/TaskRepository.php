@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -21,10 +22,9 @@ class TaskRepository implements TaskRepositoryInterface
         return null;
     }
 
-    public function updateTask(int $taskId, array $taskData): ?Task
+    public function updateTask(Task $task, array $taskData): ?Task
     {
         try {
-            $task = $this->getTask($taskId);
             $task->update($taskData);
             $task->refresh();
 
@@ -37,10 +37,9 @@ class TaskRepository implements TaskRepositoryInterface
         return null;
     }
 
-    public function deleteTask(int $taskId): bool
+    public function deleteTask(Task $task): bool
     {
         try {
-            $task = $this->getTask($taskId);
             $task->delete();
 
             return true;
@@ -54,11 +53,23 @@ class TaskRepository implements TaskRepositoryInterface
 
     public function getTasks(int $userId, array $filters): Collection
     {
-        return Task::whereUserId($userId)->get();
+        return Task::whereUserId($userId)
+            ->whereNull('parent_id')
+            ->get();
     }
 
     public function getTask(int $taskId): ?Task
     {
         return Task::find($taskId);
+    }
+
+    public function completeTask(Task $task): ?Task
+    {
+        $taskData = [
+            'status' => Task::STATUS_DONE,
+            'completed_at' => Carbon::now(),
+        ];
+
+        return $this->updateTask($task, $taskData);
     }
 }

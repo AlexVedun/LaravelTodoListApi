@@ -24,6 +24,10 @@ class Task extends Model
         'completed_at' => 'datetime',
     ];
 
+    protected $with = [
+        'subtasks',
+    ];
+
     // Relations
 
     public function user()
@@ -39,5 +43,12 @@ class Task extends Model
     public function subtasks()
     {
         return $this->hasMany(Task::class, 'parent_id', 'id');
+    }
+
+    // Attributes
+
+    public function getHasUndoneSubtasksAttribute(): bool
+    {
+        return $this->subtasks()->where('status', self::STATUS_TODO)->count() > 0;
     }
 }
