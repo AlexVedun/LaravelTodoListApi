@@ -12,6 +12,10 @@ class Task extends Model
     public const STATUS_TODO = 'todo';
     public const STATUS_DONE = 'done';
 
+    public const SORT_CREATED_AT = 'created_at';
+    public const SORT_COMPLETED_AT = 'completed_at';
+    public const SORT_PRIORITY = 'priority';
+
     protected $fillable = [
         'user_id',
         'parent_id',

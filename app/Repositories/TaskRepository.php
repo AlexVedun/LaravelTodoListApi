@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\Task;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -51,10 +52,34 @@ class TaskRepository implements TaskRepositoryInterface
         return false;
     }
 
-    public function getTasks(int $userId, array $filters): Collection
+    public function getTasks(int $userId, array $filters = []): Collection
     {
-        return Task::whereUserId($userId)
+        $statusFilter = data_get($filters, 'status');
+        $priorityFilter = data_get($filters, 'priority');
+        $titleFilter = data_get($filters, 'title');
+        $sortBy = data_get($filters, 'sort_by', Task::SORT_CREATED_AT);
+        $sortDirection = data_get($filters, 'sort_direction', 'desc');
+
+        $tasksQuery = Task::whereUserId($userId)
             ->whereNull('parent_id')
+            ->when($statusFilter, function (Builder $query) use ($statusFilter) {
+                return $query->where('status', $statusFilter);
+            })
+            ->when($priorityFilter, function (Builder $query) use ($priorityFilter) {
+                return $query->where('priority', $priorityFilter);
+            })
+            ->when($titleFilter, function (Builder $query) use ($titleFilter) {
+                return $query->where('title', 'like', "%${titleFilter}%");
+            });
+
+        $sortField = match ($sortBy) {
+            Task::SORT_PRIORITY => 'priority',
+            Task::SORT_COMPLETED_AT => 'completed_at',
+            default => 'created_at',
+        };
+
+        return $tasksQuery
+            ->orderBy($sortField, $sortDirection)
             ->get();
     }
 

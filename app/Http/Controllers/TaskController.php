@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaskRequests\CreateTaskRequest;
+use App\Http\Requests\TaskRequests\GetTasksRequest;
 use App\Http\Requests\TaskRequests\TaskRequest;
 use App\Http\Requests\TaskRequests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
@@ -26,13 +27,20 @@ class TaskController extends Controller
         $this->responseService = $responseService;
     }
 
-    public function all(): JsonResponse
+    public function all(GetTasksRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        $filters = $request->only([
+            'status',
+            'title',
+            'priority',
+            'sort_by',
+            'sort_direction',
+        ]);
 
-        $tasks = $this->taskRepository->getTasks($user->id, []);
+        $tasks = $this->taskRepository->getTasks($user->id, $filters);
 
         return response()->json(
             $this->responseService->getOkResponse(
