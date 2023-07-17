@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\TaskRequests;
 
-use App\Models\Task;
+use App\Enums\TaskSortBy;
+use App\Enums\TaskStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 
 class GetTasksRequest extends FormRequest
 {
@@ -23,14 +25,11 @@ class GetTasksRequest extends FormRequest
      */
     public function rules(): array
     {
-        $statusVariants = [Task::STATUS_DONE, Task::STATUS_TODO];
-        $sortByVariants = [Task::SORT_CREATED_AT, Task::SORT_COMPLETED_AT, Task::SORT_PRIORITY];
-
         return [
-            'status' => ['nullable', 'string', Rule::in($statusVariants)],
+            'status' => ['nullable', 'string', new Enum(TaskStatus::class)],
             'priority' => ['nullable', 'int', Rule::in([1, 2, 3, 4, 5])],
             'title' => ['nullable', 'string'],
-            'sort_by' => ['nullable', 'string', Rule::in($sortByVariants)],
+            'sort_by' => ['nullable', 'string', new Enum(TaskSortBy::class)],
             'sort_direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
         ];
     }

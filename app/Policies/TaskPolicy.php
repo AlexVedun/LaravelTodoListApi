@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -21,7 +22,7 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        return ($user->id == $task->user_id) && ($task->status != Task::STATUS_DONE) ;
+        return ($user->id == $task->user_id) && ($task->status != TaskStatus::DONE) ;
     }
 
     /**
@@ -29,7 +30,7 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task): bool
     {
-        return ($user->id == $task->user_id) && ($task->status != Task::STATUS_DONE);
+        return ($user->id == $task->user_id) && ($task->status != TaskStatus::DONE);
     }
 
     public function complete(User $user, Task $task): bool

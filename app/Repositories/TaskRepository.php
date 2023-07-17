@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\TaskSortBy;
+use App\Enums\TaskStatus;
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\Task;
 use Carbon\Carbon;
@@ -13,7 +15,7 @@ class TaskRepository implements TaskRepositoryInterface
 {
     public function createTask(array $taskData): ?Task
     {
-        $taskData['status'] = Task::STATUS_TODO;
+        $taskData['status'] = TaskStatus::TODO;
 
         try {
             return Task::create($taskData);
@@ -59,7 +61,7 @@ class TaskRepository implements TaskRepositoryInterface
         $statusFilter = data_get($filters, 'status');
         $priorityFilter = data_get($filters, 'priority');
         $titleFilter = data_get($filters, 'title');
-        $sortBy = data_get($filters, 'sort_by', Task::SORT_CREATED_AT);
+        $sortBy = data_get($filters, 'sort_by', TaskSortBy::CREATED_AT);
         $sortDirection = data_get($filters, 'sort_direction', 'desc');
 
         $tasksQuery = Task::whereUserId($userId)
@@ -74,14 +76,8 @@ class TaskRepository implements TaskRepositoryInterface
                 return $query->whereFullText('title', $titleFilter);
             });
 
-        $sortField = match ($sortBy) {
-            Task::SORT_PRIORITY => 'priority',
-            Task::SORT_COMPLETED_AT => 'completed_at',
-            default => 'created_at',
-        };
-
         return $tasksQuery
-            ->orderBy($sortField, $sortDirection)
+            ->orderBy($sortBy, $sortDirection)
             ->get();
     }
 
@@ -93,7 +89,7 @@ class TaskRepository implements TaskRepositoryInterface
     public function completeTask(Task $task): ?Task
     {
         $taskData = [
-            'status' => Task::STATUS_DONE,
+            'status' => TaskStatus::DONE,
             'completed_at' => Carbon::now(),
         ];
 

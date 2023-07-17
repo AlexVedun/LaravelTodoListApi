@@ -2,19 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
     use HasFactory;
-
-    public const STATUS_TODO = 'todo';
-    public const STATUS_DONE = 'done';
-
-    public const SORT_CREATED_AT = 'created_at';
-    public const SORT_COMPLETED_AT = 'completed_at';
-    public const SORT_PRIORITY = 'priority';
 
     protected $fillable = [
         'user_id',
@@ -27,6 +21,7 @@ class Task extends Model
     ];
     protected $casts = [
         'completed_at' => 'datetime',
+        'status' => TaskStatus::class,
     ];
 
     protected $with = [
@@ -54,6 +49,6 @@ class Task extends Model
 
     public function getHasUndoneSubtasksAttribute(): bool
     {
-        return $this->subtasks()->where('status', self::STATUS_TODO)->count() > 0;
+        return $this->subtasks()->where('status', TaskStatus::TODO)->count() > 0;
     }
 }

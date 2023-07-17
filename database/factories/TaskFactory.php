@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,7 +15,7 @@ class TaskFactory extends Factory
     public function definition()
     {
         return [
-            'status' => Task::STATUS_TODO,
+            'status' => TaskStatus::TODO,
             'priority' => $this->faker->numberBetween(1, 5),
             'title' => $this->faker->realText(30),
             'description' => $this->faker->realText(),
