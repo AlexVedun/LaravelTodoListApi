@@ -61,7 +61,7 @@ class TaskRepository implements TaskRepositoryInterface
         $statusFilter = data_get($filters, 'status');
         $priorityFilter = data_get($filters, 'priority');
         $titleFilter = data_get($filters, 'title');
-        $sortBy = data_get($filters, 'sort_by', TaskSortBy::CREATED_AT);
+        $sortBy = TaskSortBy::from(data_get($filters, 'sort_by', TaskSortBy::CREATED_AT->value));
         $sortDirection = data_get($filters, 'sort_direction', 'desc');
 
         $tasksQuery = Task::whereUserId($userId)
@@ -77,7 +77,7 @@ class TaskRepository implements TaskRepositoryInterface
             });
 
         return $tasksQuery
-            ->orderBy($sortBy, $sortDirection)
+            ->orderBy($sortBy->value, $sortDirection)
             ->get();
     }
 

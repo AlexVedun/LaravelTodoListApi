@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TaskRequests\CreateTaskRequest;
 use App\Http\Requests\TaskRequests\GetTasksRequest;
-use App\Http\Requests\TaskRequests\TaskRequest;
-use App\Http\Requests\TaskRequests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\User;
@@ -27,7 +25,7 @@ class TaskController extends Controller
         $this->responseService = $responseService;
     }
 
-    public function all(GetTasksRequest $request): JsonResponse
+    public function index(GetTasksRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
@@ -50,14 +48,13 @@ class TaskController extends Controller
         );
     }
 
-    public function get(TaskRequest $request): JsonResponse
+    public function show(int $id): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
-        $taskId = $request->get('task_id');
 
-        $task = $this->taskRepository->getTask($taskId);
+        $task = $this->taskRepository->getTask($id);
 
         if ($user->cannot('view', $task)) {
             return response()->json(
@@ -74,7 +71,7 @@ class TaskController extends Controller
         );
     }
 
-    public function create(CreateTaskRequest $request): JsonResponse
+    public function store(CreateTaskRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
@@ -115,12 +112,11 @@ class TaskController extends Controller
         );
     }
 
-    public function update(UpdateTaskRequest $request): JsonResponse
+    public function update(int $id, CreateTaskRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
-        $taskId = $request->get('task_id');
         $taskData = $request->only([
             'priority',
             'title',
@@ -128,7 +124,7 @@ class TaskController extends Controller
         ]);
         $taskData['user_id'] = $user->id;
 
-        $task = $this->taskRepository->getTask($taskId);
+        $task = $this->taskRepository->getTask($id);
 
         if ($user->cannot('update', $task)) {
             return response()->json(
@@ -154,14 +150,13 @@ class TaskController extends Controller
         );
     }
 
-    public function delete(TaskRequest $request): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
-        $taskId = $request->get('task_id');
 
-        $task = $this->taskRepository->getTask($taskId);
+        $task = $this->taskRepository->getTask($id);
 
         if ($user->cannot('delete', $task)) {
             return response()->json(
@@ -182,14 +177,13 @@ class TaskController extends Controller
         );
     }
 
-    public function complete(TaskRequest $request): JsonResponse
+    public function complete(int $id): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
-        $taskId = $request->get('task_id');
 
-        $task = $this->taskRepository->getTask($taskId);
+        $task = $this->taskRepository->getTask($id);
 
         if ($user->cannot('update', $task)) {
             return response()->json(
