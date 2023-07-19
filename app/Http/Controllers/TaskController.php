@@ -9,8 +9,7 @@ use App\Interfaces\TaskRepositoryInterface;
 use App\Models\User;
 use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -53,15 +52,11 @@ class TaskController extends Controller
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        Auth::login($user);
 
         $task = $this->taskRepository->getTask($id);
 
-        if ($user->cannot('view', $task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('User not allowed to view this task'),
-                Response::HTTP_FORBIDDEN
-            );
-        }
+        $this->authorize('view', $task);
 
         return response()->json(
             $this->responseService->getOkResponse(
@@ -76,6 +71,7 @@ class TaskController extends Controller
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        Auth::login($user);
         $parentId = $request->get('parent_id');
         $taskData = $request->only([
             'description',
@@ -87,22 +83,11 @@ class TaskController extends Controller
 
         if ($parentId) {
             $task = $this->taskRepository->getTask($parentId);
-            if ($user->cannot('update', $task)) {
-                return response()->json(
-                    $this->responseService->getErrorResponse('User not allowed to create subtask for this task'),
-                    Response::HTTP_FORBIDDEN
-                );
-            }
+
+            $this->authorize('update', $task);
         }
 
         $task = $this->taskRepository->createTask($taskData);
-
-        if ($task == null) {
-            return response()->json(
-                $this->responseService->getErrorResponse('Cannot create task due to internal error'),
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
 
         return response()->json(
             $this->responseService->getOkResponse(
@@ -117,6 +102,7 @@ class TaskController extends Controller
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        Auth::login($user);
         $taskData = $request->only([
             'priority',
             'title',
@@ -126,21 +112,9 @@ class TaskController extends Controller
 
         $task = $this->taskRepository->getTask($id);
 
-        if ($user->cannot('update', $task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('User not allowed to update the task'),
-                Response::HTTP_FORBIDDEN
-            );
-        }
+        $this->authorize('update', $task);
 
         $task = $this->taskRepository->updateTask($task, $taskData);
-
-        if ($task == null) {
-            return response()->json(
-                $this->responseService->getErrorResponse('Cannot update task due to internal error'),
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
 
         return response()->json(
             $this->responseService->getOkResponse(
@@ -155,22 +129,13 @@ class TaskController extends Controller
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        Auth::login($user);
 
         $task = $this->taskRepository->getTask($id);
 
-        if ($user->cannot('delete', $task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('User not allowed to delete this task'),
-                Response::HTTP_FORBIDDEN
-            );
-        }
+        $this->authorize('delete', $task);
 
-        if (!$this->taskRepository->deleteTask($task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('Cannot delete selected task due to internal error'),
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
+        $this->taskRepository->deleteTask($task);
 
         return response()->json(
             $this->responseService->getOkResponse('Task has been deleted successfully')
@@ -182,31 +147,14 @@ class TaskController extends Controller
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
+        Auth::login($user);
 
         $task = $this->taskRepository->getTask($id);
 
-        if ($user->cannot('update', $task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('User not allowed to complete this task'),
-                Response::HTTP_FORBIDDEN
-            );
-        }
-
-        if ($user->cannot('complete', $task)) {
-            return response()->json(
-                $this->responseService->getErrorResponse('Cannot complete task with uncompleted subtasks'),
-                Response::HTTP_FORBIDDEN
-            );
-        }
+        $this->authorize('update', $task);
+        $this->authorize('complete', $task);
 
         $task = $this->taskRepository->completeTask($task);
-
-        if (!$task) {
-            return response()->json(
-                $this->responseService->getErrorResponse('Cannot complete task due to internal error'),
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
 
         return response()->json(
             $this->responseService->getOkResponse(

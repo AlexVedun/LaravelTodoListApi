@@ -9,51 +9,31 @@ use App\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use LogicException;
 
 class TaskRepository implements TaskRepositoryInterface
 {
-    public function createTask(array $taskData): ?Task
+    public function createTask(array $taskData): Task
     {
         $taskData['status'] = TaskStatus::TODO;
 
-        try {
-            return Task::create($taskData);
-        } catch (\Throwable $exception) {
-            Log::error($exception->getMessage());
-            Log::debug($exception->getTraceAsString());
-        }
-
-        return null;
+        return Task::create($taskData);
     }
 
-    public function updateTask(Task $task, array $taskData): ?Task
+    public function updateTask(Task $task, array $taskData): Task
     {
-        try {
-            $task->update($taskData);
-            $task->refresh();
+        if (!$task->update($taskData)) {
+            throw new LogicException('Cannot update task model with id=' . $task->id);
+        };
+        $task->refresh();
 
-            return $task;
-        } catch (\Throwable $exception) {
-            Log::error($exception->getMessage());
-            Log::debug($exception->getTraceAsString());
-        }
-
-        return null;
+        return $task;
     }
 
     public function deleteTask(Task $task): bool
     {
-        try {
-            $task->delete();
-
-            return true;
-        } catch (\Throwable $exception) {
-            Log::error($exception->getMessage());
-            Log::debug($exception->getTraceAsString());
-        }
-
-        return false;
+        return $task->delete();
     }
 
     public function getTasks(int $userId, array $filters = []): Collection
@@ -83,7 +63,12 @@ class TaskRepository implements TaskRepositoryInterface
 
     public function getTask(int $taskId): ?Task
     {
-        return Task::find($taskId);
+        $task = Task::find($taskId);
+        if (!$task) {
+            throw new ModelNotFoundException('Cannot find task model with id=' . $taskId);
+        }
+
+        return $task;
     }
 
     public function completeTask(Task $task): ?Task
