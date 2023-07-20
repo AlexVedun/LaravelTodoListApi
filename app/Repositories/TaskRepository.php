@@ -2,11 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Enums\TaskSortBy;
+use App\DTO\TaskDTO\TaskDTO;
+use App\DTO\TaskDTO\TaskFilterDTO;
 use App\Enums\TaskStatus;
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\Task;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,16 +14,14 @@ use LogicException;
 
 class TaskRepository implements TaskRepositoryInterface
 {
-    public function createTask(array $taskData): Task
+    public function createTask(TaskDTO $taskData): Task
     {
-        $taskData['status'] = TaskStatus::TODO;
-
-        return Task::create($taskData);
+        return Task::create($taskData->toArray());
     }
 
-    public function updateTask(Task $task, array $taskData): Task
+    public function updateTask(Task $task, TaskDTO $taskData): Task
     {
-        if (!$task->update($taskData)) {
+        if (!$task->update($taskData->toArray())) {
             throw new LogicException('Cannot update task model with id=' . $task->id);
         };
         $task->refresh();
@@ -36,28 +34,23 @@ class TaskRepository implements TaskRepositoryInterface
         return $task->delete();
     }
 
-    public function getTasks(int $userId, array $filters = []): Collection
+    public function getTasks(int $userId, TaskFilterDTO $filters): Collection
     {
-        $statusFilter = data_get($filters, 'status');
-        $priorityFilter = data_get($filters, 'priority');
-        $titleFilter = data_get($filters, 'title');
-        $sortBy = TaskSortBy::from(data_get($filters, 'sort_by', TaskSortBy::CREATED_AT->value));
-        $sortDirection = data_get($filters, 'sort_direction', 'desc');
-
-        $tasksQuery = Task::whereUserId($userId)
+        $tasksQuery = Task::query()
+            ->whereUserId($userId)
             ->whereNull('parent_id')
-            ->when($statusFilter, function (Builder $query) use ($statusFilter) {
-                return $query->where('status', $statusFilter);
+            ->when($filters->status, function (Builder $query) use ($filters) {
+                return $query->where('status', $filters->status->value);
             })
-            ->when($priorityFilter, function (Builder $query) use ($priorityFilter) {
-                return $query->where('priority', $priorityFilter);
+            ->when($filters->priority, function (Builder $query) use ($filters) {
+                return $query->where('priority', $filters->priority);
             })
-            ->when($titleFilter, function (Builder $query) use ($titleFilter) {
-                return $query->whereFullText('title', $titleFilter);
+            ->when($filters->title, function (Builder $query) use ($filters) {
+                return $query->whereFullText('title', $filters->title);
             });
 
         return $tasksQuery
-            ->orderBy($sortBy->value, $sortDirection)
+            ->orderBy($filters->sortBy->value, $filters->sortDirection->value)
             ->get();
     }
 
@@ -71,12 +64,11 @@ class TaskRepository implements TaskRepositoryInterface
         return $task;
     }
 
-    public function completeTask(Task $task): ?Task
+    public function completeTask(Task $task): Task
     {
-        $taskData = [
-            'status' => TaskStatus::DONE,
-            'completed_at' => Carbon::now(),
-        ];
+        $taskData = TaskDTO::fromModel($task);
+        $taskData->status = TaskStatus::DONE;
+        $taskData->completedAt = now();
 
         return $this->updateTask($task, $taskData);
     }

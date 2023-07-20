@@ -3,6 +3,7 @@
 namespace App\Http\Requests\TaskRequests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TaskRequest extends FormRequest
 {
@@ -22,7 +23,10 @@ class TaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'task_id' => ['required', 'int', 'exists:tasks,id'],
+            'priority' => ['required', 'int', Rule::in([1, 2, 3, 4, 5])],
+            'title' => ['required', 'string', 'max:250'],
+            'description' => ['required', 'string'],
+            'parent_id' => ['nullable', 'int', 'exists:tasks,id'],
         ];
     }
 }

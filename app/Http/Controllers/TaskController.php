@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TaskRequests\CreateTaskRequest;
-use App\Http\Requests\TaskRequests\GetTasksRequest;
+use App\DTO\TaskDTO\TaskDTO;
+use App\DTO\TaskDTO\TaskFilterDTO;
+use App\Http\Requests\TaskRequests\TaskRequest;
+use App\Http\Requests\TaskRequests\TasksFilterRequest;
 use App\Http\Resources\TaskResource;
 use App\Interfaces\TaskRepositoryInterface;
 use App\Models\User;
@@ -24,20 +26,14 @@ class TaskController extends Controller
         $this->responseService = $responseService;
     }
 
-    public function index(GetTasksRequest $request): JsonResponse
+    public function index(TasksFilterRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
-        $filters = $request->only([
-            'status',
-            'title',
-            'priority',
-            'sort_by',
-            'sort_direction',
-        ]);
+        $taskFilterDTO = TaskFilterDTO::fromRequest($request);
 
-        $tasks = $this->taskRepository->getTasks($user->id, $filters);
+        $tasks = $this->taskRepository->getTasks($user->id, $taskFilterDTO);
 
         return response()->json(
             $this->responseService->getOkResponse(
@@ -66,25 +62,18 @@ class TaskController extends Controller
         );
     }
 
-    public function store(CreateTaskRequest $request): JsonResponse
+    public function store(TaskRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
         Auth::login($user);
         $parentId = $request->get('parent_id');
-        $taskData = $request->only([
-            'description',
-            'title',
-            'priority',
-            'parent_id',
-        ]);
-        $taskData['user_id'] = $user->id;
+        $taskData = TaskDTO::fromRequest($request, $user->id);
 
         if ($parentId) {
-            $task = $this->taskRepository->getTask($parentId);
-
-            $this->authorize('update', $task);
+            $parentTask = $this->taskRepository->getTask($parentId);
+            $this->authorize('update', $parentTask);
         }
 
         $task = $this->taskRepository->createTask($taskData);
@@ -97,18 +86,13 @@ class TaskController extends Controller
         );
     }
 
-    public function update(int $id, CreateTaskRequest $request): JsonResponse
+    public function update(int $id, TaskRequest $request): JsonResponse
     {
         // In real application here we obtain the model of user authenticated before,
         // for example, by using Auth::user(), or get user id in request
         $user = User::find(1);
         Auth::login($user);
-        $taskData = $request->only([
-            'priority',
-            'title',
-            'description'
-        ]);
-        $taskData['user_id'] = $user->id;
+        $taskData = TaskDTO::fromRequest($request, $user->id);
 
         $task = $this->taskRepository->getTask($id);
 
